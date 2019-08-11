@@ -219,6 +219,7 @@ function renderMantis( $input, $args, $mwParser )
 	$conf['headername']         = NULL;
 	$conf['align']              = NULL;
 	$conf['summary_as_comment'] = false;
+	$conf['OutputFormat']       = 'table'
 
 	$tableOptions   = ['sortable', 'standard', 'noborder'];
 	$orderbyOptions = createArray($columnNames);
@@ -422,6 +423,22 @@ function renderMantis( $input, $args, $mwParser )
 				break;
 			case 'username':
 				$tmpUsernames = $csArg;
+				break;
+			case 'output_format':
+				$tmpOutputFormat = $csArg;
+				switch($tmpOutputFormat)
+				{
+					case 'table':
+						$conf['OutputFormat'] = 'table';
+						break;
+					case 'no_table':
+						$conf['OutputFormat'] = 'no_table';
+						break;
+					default :
+						// for backward compatibility
+						$conf['OutputFormat'] = 'table';
+						break;
+				}
 				break;
 			default:
 				break;
@@ -920,7 +937,10 @@ function renderMantis( $input, $args, $mwParser )
 		}
 
 		// create table start
-		$output = '{| class="wikitable sortable"'."\n";
+		if ($conf['OutputFormat'] == 'table')
+		{
+			$output = '{| class="wikitable sortable"'."\n";
+		}
 
 		// create table header - use an array to specify which columns to display
 		if ($conf['header'])
@@ -936,12 +956,23 @@ function renderMantis( $input, $args, $mwParser )
 			}
 		}
 
-		$format = "|style=\"padding-left:10px; padding-right:10px; color: black; background-color: #%s; text-align:%s\" |";
+		if ($conf['OutputFormat'] == 'table')
+		{
+			$format = "|style=\"padding-left:10px; padding-right:10px; color: black; background-color: #%s; text-align:%s\" |";
+		}
 
 		// create table rows
 		while ($row = $result->fetch_assoc())
 		{
-			$output .= "|-\n";
+
+			if ($conf['OutputFormat'] == 'table')
+			{
+				$output .= "|-\n";
+			}
+			elseif ($conf['OutputFormat'] == 'no_table')
+			{
+				$output .= "\n";
+			}
 
 			foreach ($conf['show'] as $colname)
 			{
@@ -1029,7 +1060,10 @@ function renderMantis( $input, $args, $mwParser )
 			}
 		}
 		// create table end
-		$output .= "|}\n";
+		if ($conf['OutputFormat'] == 'table')
+		{
+			$output .= "|}\n";
+		}
 
 		$result->free();
 	}
